@@ -9,6 +9,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
+#include <X11/extensions/Xfixes.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,6 @@
 #include <signal.h>
 #include <math.h>
 #include <sys/time.h>
-
 
 /*
  *      カーソルビットマップファイルの読み込み
@@ -51,37 +51,44 @@
  *      定数定義
  */
 
-#define BITMAP_WIDTH            32      /* １キャラクタの幅 (ピクセル) */
-#define BITMAP_HEIGHT           32      /* １キャラクタの高さ (ピクセル) */
+/* １キャラクタの幅 (ピクセル) */
+#define BITMAP_WIDTH            32
+/* １キャラクタの高さ (ピクセル) */
+#define BITMAP_HEIGHT           32
 
 #define AVAIL_KEYBUF            255
-#define MAX_TICK                9999            /* Odd Only! */
+/* Odd Only! */
+#define MAX_TICK                9999            
 
-#define DEFAULT_FOREGROUND      "black"         /* フォアグラウンドカラー */
-#define DEFAULT_BACKGROUND      "white"         /* バックグラウンドカラー */
+/* フォアグラウンドカラー */
+#define DEFAULT_FOREGROUND      "black"
+/* バックグラウンドカラー */
+#define DEFAULT_BACKGROUND      "white"
 
 /*
  *      猫の状態定数
  */
 
-#define NEKO_STOP               0       /* 立ち止まった */
-#define NEKO_JARE               1       /* 顔を洗っている */
-#define NEKO_KAKI               2       /* 頭を掻いている */
-#define NEKO_AKUBI              3       /* あくびをしている */
-#define NEKO_SLEEP              4       /* 寝てしまった */
-#define NEKO_AWAKE              5       /* 目が覚めた */
-#define NEKO_U_MOVE             6       /* 上に移動中 */
-#define NEKO_D_MOVE             7       /* 下に移動中 */
-#define NEKO_L_MOVE             8       /* 左に移動中 */
-#define NEKO_R_MOVE             9       /* 右に移動中 */
-#define NEKO_UL_MOVE            10      /* 左上に移動中 */
-#define NEKO_UR_MOVE            11      /* 右上に移動中 */
-#define NEKO_DL_MOVE            12      /* 左下に移動中 */
-#define NEKO_DR_MOVE            13      /* 右下に移動中 */
-#define NEKO_U_TOGI             14      /* 上の壁を引っ掻いている */
-#define NEKO_D_TOGI             15      /* 下の壁を引っ掻いている */
-#define NEKO_L_TOGI             16      /* 左の壁を引っ掻いている */
-#define NEKO_R_TOGI             17      /* 右の壁を引っ掻いている */
+enum {
+	NEKO_STOP = 0, /* 立ち止まった */			  
+	NEKO_JARE,		/* 顔を洗っている */		  
+	NEKO_KAKI,		/* 頭を掻いている */		  
+	NEKO_AKUBI,		/* あくびをしている */		  
+	NEKO_SLEEP,		/* 寝てしまった */			  
+	NEKO_AWAKE,		/* 目が覚めた */				  
+	NEKO_U_MOVE,	/* 上に移動中 */				  
+	NEKO_D_MOVE,	/* 下に移動中 */				  
+	NEKO_L_MOVE,	/* 左に移動中 */				  
+	NEKO_R_MOVE,	/* 右に移動中 */				  
+	NEKO_UL_MOVE,	/* 左上に移動中 */			  
+	NEKO_UR_MOVE,	/* 右上に移動中 */			  
+	NEKO_DL_MOVE,	/* 左下に移動中 */			  
+	NEKO_DR_MOVE,	/* 右下に移動中 */			  
+	NEKO_U_TOGI,	/* 上の壁を引っ掻いている */
+	NEKO_D_TOGI,	/* 下の壁を引っ掻いている */
+	NEKO_L_TOGI,	/* 左の壁を引っ掻いている */
+	NEKO_R_TOGI,	/* 右の壁を引っ掻いている */
+};
 
 /*
  *      猫のアニメーション繰り返し回数

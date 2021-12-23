@@ -4,8 +4,6 @@
 
 #include "oneko.h"
 #include "patchlevel.h"
-#include <X11/extensions/shape.h>
-#include <X11/extensions/Xfixes.h>
 
 /*
  *      グローバル変数
@@ -107,36 +105,26 @@ int     RaiseWindowDelay=0;
 double  SinPiPer8Times3;        /* sin(３π／８) */
 double  SinPiPer8;              /* sin(π／８) */
 
-Pixmap  Mati2Xbm, Jare2Xbm, Kaki1Xbm, Kaki2Xbm, Mati3Xbm, Sleep1Xbm, Sleep2Xbm;
-Pixmap  Mati2Msk, Jare2Msk, Kaki1Msk, Kaki2Msk, Mati3Msk, Sleep1Msk, Sleep2Msk;
+#define DEF_FRAME(name) Pixmap name##Xbm, name##Msk; GC name##GC
 
-Pixmap  AwakeXbm, AwakeMsk;
-
-Pixmap  Up1Xbm, Up2Xbm, Down1Xbm, Down2Xbm, Left1Xbm, Left2Xbm;
-Pixmap  Up1Msk, Up2Msk, Down1Msk, Down2Msk, Left1Msk, Left2Msk;
-Pixmap  Right1Xbm, Right2Xbm, UpLeft1Xbm, UpLeft2Xbm, UpRight1Xbm;
-Pixmap  Right1Msk, Right2Msk, UpLeft1Msk, UpLeft2Msk, UpRight1Msk;
-Pixmap  UpRight2Xbm, DownLeft1Xbm, DownLeft2Xbm, DownRight1Xbm, DownRight2Xbm;
-Pixmap  UpRight2Msk, DownLeft1Msk, DownLeft2Msk, DownRight1Msk, DownRight2Msk;
-
-Pixmap  UpTogi1Xbm, UpTogi2Xbm, DownTogi1Xbm, DownTogi2Xbm, LeftTogi1Xbm;
-Pixmap  UpTogi1Msk, UpTogi2Msk, DownTogi1Msk, DownTogi2Msk, LeftTogi1Msk;
-Pixmap  LeftTogi2Xbm, RightTogi1Xbm, RightTogi2Xbm;
-Pixmap  LeftTogi2Msk, RightTogi1Msk, RightTogi2Msk;
-
-GC      Mati2GC;
-
-GC      Jare2GC, Kaki1GC, Kaki2GC, Mati3GC, Sleep1GC, Sleep2GC;
-
-GC      AwakeGC;
-
-GC      Up1GC, Up2GC, Down1GC, Down2GC, Left1GC, Left2GC, Right1GC, Right2GC;
-GC      UpLeft1GC, UpLeft2GC, UpRight1GC, UpRight2GC, DownLeft1GC, DownLeft2GC;
-GC      DownRight1GC, DownRight2GC;
-
-GC      UpTogi1GC, UpTogi2GC, DownTogi1GC, DownTogi2GC, LeftTogi1GC;
-GC      LeftTogi2GC, RightTogi1GC, RightTogi2GC;
-
+DEF_FRAME(Mati2);
+DEF_FRAME(Jare2);
+DEF_FRAME(Kaki1); DEF_FRAME(Kaki2);
+DEF_FRAME(Mati3);
+DEF_FRAME(Sleep1); DEF_FRAME(Sleep2);
+DEF_FRAME(Awake);
+DEF_FRAME(Up1); DEF_FRAME(Up2);
+DEF_FRAME(Down1); DEF_FRAME(Down2);
+DEF_FRAME(Left1); DEF_FRAME(Left2);
+DEF_FRAME(Right1); DEF_FRAME(Right2);
+DEF_FRAME(UpLeft1); DEF_FRAME(UpLeft2);
+DEF_FRAME(UpRight1); DEF_FRAME(UpRight2);
+DEF_FRAME(DownLeft1); DEF_FRAME(DownLeft2);
+DEF_FRAME(DownRight1); DEF_FRAME(DownRight2);
+DEF_FRAME(UpTogi1); DEF_FRAME(UpTogi2);
+DEF_FRAME(DownTogi1); DEF_FRAME(DownTogi2);
+DEF_FRAME(LeftTogi1); DEF_FRAME(LeftTogi2);
+DEF_FRAME(RightTogi1); DEF_FRAME(RightTogi2);
 
 typedef struct BitmapGCData {
 	GC* GCCreatePtr;
@@ -189,43 +177,32 @@ typedef struct {
 	Pixmap      *TickMaskPtr;
 } Animation;
 
+#define ANIM_CONSTANTS(name1, name2) {{&name1##GC, &name1##Msk},{&name2##GC, &name2##Msk}}
+
 Animation AnimationPattern[][2] = {
-	{ { &Mati2GC, &Mati2Msk },
-	  { &Mati2GC, &Mati2Msk } },          /* NekoState == NEKO_STOP */
-	{ { &Jare2GC, &Jare2Msk },
-	  { &Mati2GC, &Mati2Msk } },          /* NekoState == NEKO_JARE */
-	{ { &Kaki1GC, &Kaki1Msk },
-	  { &Kaki2GC, &Kaki2Msk } },          /* NekoState == NEKO_KAKI */
-	{ { &Mati3GC, &Mati3Msk },
-	  { &Mati3GC, &Mati3Msk } },          /* NekoState == NEKO_AKUBI */
-	{ { &Sleep1GC, &Sleep1Msk },
-	  { &Sleep2GC, &Sleep2Msk } },                /* NekoState == NEKO_SLEEP */
-	{ { &AwakeGC, &AwakeMsk },
-	  { &AwakeGC, &AwakeMsk } },          /* NekoState == NEKO_AWAKE */
-	{ { &Up1GC, &Up1Msk },
-	  { &Up2GC, &Up2Msk } },              /* NekoState == NEKO_U_MOVE */
-	{ { &Down1GC, &Down1Msk },
-	  { &Down2GC, &Down2Msk } },          /* NekoState == NEKO_D_MOVE */
-	{ { &Left1GC, &Left1Msk },
-	  { &Left2GC, &Left2Msk } },          /* NekoState == NEKO_L_MOVE */
-	{ { &Right1GC, &Right1Msk },
-	  { &Right2GC, &Right2Msk } },                /* NekoState == NEKO_R_MOVE */
-	{ { &UpLeft1GC, &UpLeft1Msk },
-	  { &UpLeft2GC, &UpLeft2Msk } },      /* NekoState == NEKO_UL_MOVE */
-	{ { &UpRight1GC, &UpRight1Msk },
-	  { &UpRight2GC, &UpRight2Msk } },    /* NekoState == NEKO_UR_MOVE */
-	{ { &DownLeft1GC, &DownLeft1Msk },
-	  { &DownLeft2GC, &DownLeft2Msk } },  /* NekoState == NEKO_DL_MOVE */
-	{ { &DownRight1GC, &DownRight1Msk },
-	  { &DownRight2GC, &DownRight2Msk } },        /* NekoState == NEKO_DR_MOVE */
-	{ { &UpTogi1GC, &UpTogi1Msk },
-	  { &UpTogi2GC, &UpTogi2Msk } },      /* NekoState == NEKO_U_TOGI */
-	{ { &DownTogi1GC, &DownTogi1Msk },
-	  { &DownTogi2GC, &DownTogi2Msk } },  /* NekoState == NEKO_D_TOGI */
-	{ { &LeftTogi1GC, &LeftTogi1Msk },
-	  { &LeftTogi2GC, &LeftTogi2Msk } },  /* NekoState == NEKO_L_TOGI */
-	{ { &RightTogi1GC, &RightTogi1Msk },
-	  { &RightTogi2GC, &RightTogi2Msk } },        /* NekoState == NEKO_R_TOGI */
+	/* NekoState == NEKO_STOP */
+	ANIM_CONSTANTS(Mati2, Mati2),
+	/* NekoState == NEKO_JARE */
+	ANIM_CONSTANTS(Jare2, Mati2),
+	/* NekoState == NEKO_KAKI */
+	ANIM_CONSTANTS(Kaki1, Kaki2),
+	/* NekoState == NEKO_AKUBI */
+	ANIM_CONSTANTS(Mati3, Mati3),
+	/* NekoState == NEKO_SLEEP */
+	ANIM_CONSTANTS(Sleep1, Sleep2),
+	ANIM_CONSTANTS(Awake, Awake), /* NekoState == NEKO_AWAKE */
+	ANIM_CONSTANTS(Up1, Up2), /* NekoState == NEKO_U_MOVE */
+	ANIM_CONSTANTS(Down1, Down2), /* NekoState == NEKO_D_MOVE */
+	ANIM_CONSTANTS(Left1, Left2), /* NekoState == NEKO_L_MOVE */
+	ANIM_CONSTANTS(Right1, Right2), /* NekoState == NEKO_R_MOVE */
+	ANIM_CONSTANTS(UpLeft1, UpLeft2), /* NekoState == NEKO_UL_MOVE */
+	ANIM_CONSTANTS(UpRight1, UpRight2), /* NekoState == NEKO_UR_MOVE */
+	ANIM_CONSTANTS(DownLeft1, DownLeft2), /* NekoState == NEKO_DL_MOVE */
+	ANIM_CONSTANTS(DownRight1, DownRight2), /* NekoState == NEKO_DR_MOVE */
+	ANIM_CONSTANTS(UpTogi1, UpTogi2), /* NekoState == NEKO_U_TOGI */
+	ANIM_CONSTANTS(DownTogi1, DownTogi2), /* NekoState == NEKO_D_TOGI */
+	ANIM_CONSTANTS(LeftTogi1, LeftTogi2), /* NekoState == NEKO_L_TOGI */
+	ANIM_CONSTANTS(RightTogi1, RightTogi2), /* NekoState == NEKO_R_TOGI */
 };
 
 static void NullFunction();
