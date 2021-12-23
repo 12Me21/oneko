@@ -12,7 +12,7 @@
 char    *ClassName = "Oneko";           /* コマンド名称 */
 char    *ProgramName;                   /* コマンド名称 */
 
-Display *theDisplay;                    /* ディスプレイ構造体 */
+Display* D;                    /* ディスプレイ構造体 */
 int     theScreen;                      /* スクリーン番号 */
 unsigned int    theDepth;               /* デプス */
 Window  theRoot;                        /* ルートウィンドウのＩＤ */
@@ -180,29 +180,24 @@ typedef struct {
 #define ANIM_CONSTANTS(name1, name2) {{&name1##GC, &name1##Msk},{&name2##GC, &name2##Msk}}
 
 Animation AnimationPattern[][2] = {
-	/* NekoState == NEKO_STOP */
-	ANIM_CONSTANTS(Mati2, Mati2),
-	/* NekoState == NEKO_JARE */
-	ANIM_CONSTANTS(Jare2, Mati2),
-	/* NekoState == NEKO_KAKI */
-	ANIM_CONSTANTS(Kaki1, Kaki2),
-	/* NekoState == NEKO_AKUBI */
-	ANIM_CONSTANTS(Mati3, Mati3),
-	/* NekoState == NEKO_SLEEP */
-	ANIM_CONSTANTS(Sleep1, Sleep2),
-	ANIM_CONSTANTS(Awake, Awake), /* NekoState == NEKO_AWAKE */
-	ANIM_CONSTANTS(Up1, Up2), /* NekoState == NEKO_U_MOVE */
-	ANIM_CONSTANTS(Down1, Down2), /* NekoState == NEKO_D_MOVE */
-	ANIM_CONSTANTS(Left1, Left2), /* NekoState == NEKO_L_MOVE */
-	ANIM_CONSTANTS(Right1, Right2), /* NekoState == NEKO_R_MOVE */
-	ANIM_CONSTANTS(UpLeft1, UpLeft2), /* NekoState == NEKO_UL_MOVE */
-	ANIM_CONSTANTS(UpRight1, UpRight2), /* NekoState == NEKO_UR_MOVE */
-	ANIM_CONSTANTS(DownLeft1, DownLeft2), /* NekoState == NEKO_DL_MOVE */
-	ANIM_CONSTANTS(DownRight1, DownRight2), /* NekoState == NEKO_DR_MOVE */
-	ANIM_CONSTANTS(UpTogi1, UpTogi2), /* NekoState == NEKO_U_TOGI */
-	ANIM_CONSTANTS(DownTogi1, DownTogi2), /* NekoState == NEKO_D_TOGI */
-	ANIM_CONSTANTS(LeftTogi1, LeftTogi2), /* NekoState == NEKO_L_TOGI */
-	ANIM_CONSTANTS(RightTogi1, RightTogi2), /* NekoState == NEKO_R_TOGI */
+	ANIM_CONSTANTS(Mati2, Mati2), // NEKO_STOP
+	ANIM_CONSTANTS(Jare2, Mati2), // NEKO_JARE
+	ANIM_CONSTANTS(Kaki1, Kaki2), // NEKO_KAKI
+	ANIM_CONSTANTS(Mati3, Mati3), // NEKO_AKUBI
+	ANIM_CONSTANTS(Sleep1, Sleep2), // NEKO_SLEEP
+	ANIM_CONSTANTS(Awake, Awake), // NEKO_AWAKE
+	ANIM_CONSTANTS(Up1, Up2), // NEKO_U_MOVE
+	ANIM_CONSTANTS(Down1, Down2), // NEKO_D_MOVE
+	ANIM_CONSTANTS(Left1, Left2), // NEKO_L_MOVE
+	ANIM_CONSTANTS(Right1, Right2), // NEKO_R_MOVE
+	ANIM_CONSTANTS(UpLeft1, UpLeft2), // NEKO_UL_MOVE
+	ANIM_CONSTANTS(UpRight1, UpRight2), // NEKO_UR_MOVE
+	ANIM_CONSTANTS(DownLeft1, DownLeft2), // NEKO_DL_MOVE
+	ANIM_CONSTANTS(DownRight1, DownRight2), // NEKO_DR_MOVE
+	ANIM_CONSTANTS(UpTogi1, UpTogi2), // NEKO_U_TOGI
+	ANIM_CONSTANTS(DownTogi1, DownTogi2), // NEKO_D_TOGI
+	ANIM_CONSTANTS(LeftTogi1, LeftTogi2), // NEKO_L_TOGI
+	ANIM_CONSTANTS(RightTogi1, RightTogi2), // NEKO_R_TOGI
 };
 
 static void NullFunction();
@@ -212,40 +207,36 @@ static void NullFunction();
  */
 
 void InitBitmapAndGCs() {
-	BitmapGCData        *BitmapGCDataTablePtr;
-	XGCValues           theGCValues;
+	XGCValues theGCValues = {
+		.function = GXcopy,
+		.foreground = theForegroundColor.pixel,
+		.background = theBackgroundColor.pixel,
+		.fill_style = FillTiled,
+		.ts_x_origin = 0,
+		.ts_y_origin = 0,
+	};
+	
+	for (BitmapGCData* p = BitmapGCDataTable; p->GCCreatePtr!=NULL; p++) {
+		*(p->BitmapCreatePtr) = XCreatePixmapFromBitmapData(
+			D, theRoot,
+			p->PixelPattern[NekoMoyou],
+			BITMAP_WIDTH, BITMAP_HEIGHT,
+			theForegroundColor.pixel,
+			theBackgroundColor.pixel,
+			DefaultDepth(D, theScreen));
+		
+		theGCValues.tile = *(p->BitmapCreatePtr);
 
-	theGCValues.function = GXcopy;
-	theGCValues.foreground = theForegroundColor.pixel;
-	theGCValues.background = theBackgroundColor.pixel;
-	theGCValues.fill_style = FillTiled;
-	theGCValues.ts_x_origin = 0;
-	theGCValues.ts_y_origin = 0;
+		*(p->BitmapMasksPtr) = XCreateBitmapFromData(
+			D, theRoot,
+			p->MaskPattern[NekoMoyou],
+			BITMAP_WIDTH, BITMAP_HEIGHT);
 
-	for (BitmapGCDataTablePtr = BitmapGCDataTable;
-	     BitmapGCDataTablePtr->GCCreatePtr != NULL;
-	     BitmapGCDataTablePtr++) {
-
-		*(BitmapGCDataTablePtr->BitmapCreatePtr)
-			= XCreatePixmapFromBitmapData(theDisplay, theRoot,
-			                              BitmapGCDataTablePtr->PixelPattern[NekoMoyou],
-			                              BITMAP_WIDTH, BITMAP_HEIGHT,
-			                              theForegroundColor.pixel,
-			                              theBackgroundColor.pixel,
-			                              DefaultDepth(theDisplay, theScreen));
-
-		theGCValues.tile = *(BitmapGCDataTablePtr->BitmapCreatePtr);
-
-		*(BitmapGCDataTablePtr->BitmapMasksPtr)
-			= XCreateBitmapFromData(theDisplay, theRoot,
-			                        BitmapGCDataTablePtr->MaskPattern[NekoMoyou],
-			                        BITMAP_WIDTH, BITMAP_HEIGHT);
-
-		*(BitmapGCDataTablePtr->GCCreatePtr)
-			= XCreateGC(theDisplay, theWindow,
-			            GCFunction | GCForeground | GCBackground | GCTile |
-			            GCTileStipXOrigin | GCTileStipYOrigin | GCFillStyle,
-			            &theGCValues);
+		*(p->GCCreatePtr) = XCreateGC(
+			D, theWindow,
+			GCFunction | GCForeground | GCBackground | GCTile |
+			GCTileStipXOrigin | GCTileStipYOrigin | GCFillStyle,
+			&theGCValues);
 	}
 }
 
@@ -256,10 +247,10 @@ void InitBitmapAndGCs() {
 char* NekoGetDefault(char *resource) {
 	char    *value;
 
-	if (value = XGetDefault(theDisplay, ProgramName, resource)) {
+	if (value = XGetDefault(D, ProgramName, resource)) {
 		return value;
 	}
-	if (value = XGetDefault(theDisplay, ClassName, resource)) {
+	if (value = XGetDefault(D, ClassName, resource)) {
 		return value;
 	}
 	return NULL;
@@ -368,10 +359,10 @@ void GetResources() {
  */
 
 void SetupColors() {
-	XColor      theExactColor;
-	Colormap    theColormap;
+	XColor theExactColor;
+	Colormap theColormap;
 
-	theColormap = DefaultColormap(theDisplay, theScreen);
+	theColormap = DefaultColormap(D, theScreen);
 
 	if (theDepth == 1) {
 		Foreground = "black";
@@ -379,21 +370,19 @@ void SetupColors() {
 	}
 
 	if (ReverseVideo == True) {
-		char    *tmp;
-
-		tmp = Foreground;
+		char* tmp = Foreground;
 		Foreground = Background;
 		Background = tmp;
 	}
 
-	if (!XAllocNamedColor(theDisplay, theColormap,
+	if (!XAllocNamedColor(D, theColormap,
 	                      Foreground, &theForegroundColor, &theExactColor)) {
 		fprintf(stderr, "%s: Can't XAllocNamedColor(\"%s\").\n",
 		        ProgramName, Foreground);
 		exit(1);
 	}
 
-	if (!XAllocNamedColor(theDisplay, theColormap,
+	if (!XAllocNamedColor(D, theColormap,
 	                      Background, &theBackgroundColor, &theExactColor)) {
 		fprintf(stderr, "%s: Can't XAllocNamedColor(\"%s\").\n",
 		        ProgramName, Background);
@@ -490,7 +479,7 @@ void InitScreen(char *DisplayName) {
 	unsigned int          BorderWidth;
 	int                           event_base, error_base;
 
-	if ((theDisplay = XOpenDisplay(DisplayName)) == NULL) {
+	if ((D = XOpenDisplay(DisplayName)) == NULL) {
 		fprintf(stderr, "%s: Can't open display", ProgramName);
 		if (DisplayName != NULL) {
 			fprintf(stderr, " %s.\n", DisplayName);
@@ -504,21 +493,21 @@ void InitScreen(char *DisplayName) {
 
 	if (Synchronous == True) {
 		fprintf(stderr,"Synchronizing.\n");
-		XSynchronize(theDisplay,True);
+		XSynchronize(D,True);
 	}
 
-	if (!NoShape && XShapeQueryExtension(theDisplay,
+	if (!NoShape && XShapeQueryExtension(D,
 	                                     &event_base, &error_base) == False) {
 		fprintf(stderr, "Display not suported shape extension.\n");
 		NoShape = True;
 	}
 
-	theScreen = DefaultScreen(theDisplay);
-	theDepth = DefaultDepth(theDisplay, theScreen);
+	theScreen = DefaultScreen(D);
+	theDepth = DefaultDepth(D, theScreen);
 
-	theRoot = RootWindow(theDisplay, theScreen);
+	theRoot = RootWindow(D, theScreen);
 
-	XGetGeometry(theDisplay, theRoot, &theTempRoot,
+	XGetGeometry(D, theRoot, &theTempRoot,
 	             &WindowPointX, &WindowPointY,
 	             &WindowWidth, &WindowHeight,
 	             &BorderWidth, &theDepth);
@@ -530,7 +519,7 @@ void InitScreen(char *DisplayName) {
 			int i;
 
 			for (i=0; i<5; i++) {
-				theTarget = WindowWithName(theDisplay, theRoot, TargetName);
+				theTarget = WindowWithName(D, theRoot, TargetName);
 				if (theTarget != None) break;
 			}
 			if (theTarget == None) {
@@ -539,7 +528,7 @@ void InitScreen(char *DisplayName) {
 				exit(1);
 			}
 		} else {
-			theTarget = SelectWindow(theDisplay);
+			theTarget = SelectWindow(D);
 			if (theTarget == theRoot) {
 				theTarget = None;
 				ToWindow = False;
@@ -550,7 +539,7 @@ void InitScreen(char *DisplayName) {
 			unsigned int      nchild;
 
 			for (;;) {
-				if (XQueryTree(theDisplay, theTarget, &QueryRoot,
+				if (XQueryTree(D, theTarget, &QueryRoot,
 				               &QueryParent, &QueryChildren, &nchild)) {
 					XFree(QueryChildren);
 					if (QueryParent == QueryRoot) break;
@@ -567,29 +556,29 @@ void InitScreen(char *DisplayName) {
 	theWindowAttributes.background_pixel = theBackgroundColor.pixel;
 	theWindowAttributes.override_redirect = True;
 
-	if (!ToWindow) XChangeWindowAttributes(theDisplay, theRoot, 0, &theWindowAttributes);
+	if (!ToWindow) XChangeWindowAttributes(D, theRoot, 0, &theWindowAttributes);
 
 	theWindowMask = CWBackPixel | CWOverrideRedirect;
 
-	theWindow = XCreateWindow(theDisplay, theRoot, 0, 0,
+	theWindow = XCreateWindow(D, theRoot, 0, 0,
 	                          BITMAP_WIDTH, BITMAP_HEIGHT,
 	                          0, theDepth, InputOutput, CopyFromParent,
 	                          theWindowMask, &theWindowAttributes);
 
 	XRectangle rect;
-	XserverRegion region = XFixesCreateRegion(theDisplay, &rect, 1);
-	XFixesSetWindowShapeRegion(theDisplay, theWindow, ShapeInput, 0, 0, region);
-	XFixesDestroyRegion(theDisplay, region);
+	XserverRegion region = XFixesCreateRegion(D, &rect, 1);
+	XFixesSetWindowShapeRegion(D, theWindow, ShapeInput, 0, 0, region);
+	XFixesDestroyRegion(D, region);
   
 	if (WindowName == NULL) WindowName = ProgramName;
-	XStoreName(theDisplay, theWindow, WindowName);
+	XStoreName(D, theWindow, WindowName);
 
 	InitBitmapAndGCs();
 
-	XSelectInput(theDisplay, theWindow,
+	XSelectInput(D, theWindow,
 	             ExposureMask|VisibilityChangeMask|KeyPressMask);
 
-	XFlush(theDisplay);
+	XFlush(D);
 }
 
 
@@ -604,11 +593,11 @@ void RestoreCursor() {
 	for (BitmapGCDataTablePtr = BitmapGCDataTable;
 	     BitmapGCDataTablePtr->GCCreatePtr != NULL;
 	     BitmapGCDataTablePtr++) {
-		XFreePixmap(theDisplay,*(BitmapGCDataTablePtr->BitmapCreatePtr));
-		XFreePixmap(theDisplay,*(BitmapGCDataTablePtr->BitmapMasksPtr));
-		XFreeGC(theDisplay,*(BitmapGCDataTablePtr->GCCreatePtr));
+		XFreePixmap(D,*(BitmapGCDataTablePtr->BitmapCreatePtr));
+		XFreePixmap(D,*(BitmapGCDataTablePtr->BitmapMasksPtr));
+		XFreeGC(D,*(BitmapGCDataTablePtr->GCCreatePtr));
 	}
-	XCloseDisplay(theDisplay);
+	XCloseDisplay(D);
 	exit(0);
 }
 
@@ -671,21 +660,21 @@ void DrawNeko(int x, int y, Animation DrawAnime) {
 
 		theChanges.x = x;
 		theChanges.y = y;
-		XConfigureWindow(theDisplay, theWindow, CWX | CWY, &theChanges);
+		XConfigureWindow(D, theWindow, CWX | CWY, &theChanges);
 		if (NoShape == False) {
-			XShapeCombineMask(theDisplay, theWindow, ShapeBounding,
+			XShapeCombineMask(D, theWindow, ShapeBounding,
 			                  0, 0, DrawMask, ShapeSet);
 
 		}
 		if (DontMapped) {
-			XMapWindow(theDisplay, theWindow);
+			XMapWindow(D, theWindow);
 			DontMapped = 0;
 		}
-		XFillRectangle(theDisplay, theWindow, DrawGC,
+		XFillRectangle(D, theWindow, DrawGC,
 		               0, 0, BITMAP_WIDTH, BITMAP_HEIGHT);
 	}
 
-	XFlush(theDisplay);
+	XFlush(D);
 
 	NekoLastX = x;
 	NekoLastY = y;
@@ -699,10 +688,10 @@ void DrawNeko(int x, int y, Animation DrawAnime) {
  */
 
 void RedrawNeko() {
-	XFillRectangle(theDisplay, theWindow, NekoLastGC,
+	XFillRectangle(D, theWindow, NekoLastGC,
 	               0, 0, BITMAP_WIDTH, BITMAP_HEIGHT);
 
-	XFlush(theDisplay);
+	XFlush(D);
 }
 
 
@@ -834,7 +823,7 @@ void CalcDxDy() {
 	double              LargeX, LargeY;
 	double              DoubleLength, Length;
 
-	XQueryPointer(theDisplay, theWindow,
+	XQueryPointer(D, theWindow,
 	              &QueryRoot, &QueryChild,
 	              &AbsoluteX, &AbsoluteY,
 	              &RelativeX, &RelativeY,
@@ -850,7 +839,7 @@ void CalcDxDy() {
 	if (ToFocus) {
 		int               revert;
 
-		XGetInputFocus(theDisplay, &theTarget, &revert);
+		XGetInputFocus(D, &theTarget, &revert);
 
 		if (theTarget != theRoot
 		    && theTarget != PointerRoot && theTarget != None) {
@@ -858,7 +847,7 @@ void CalcDxDy() {
 			unsigned int    nchild;
 
 			for (;;) {
-				if (XQueryTree(theDisplay, theTarget, &QueryRoot,
+				if (XQueryTree(D, theTarget, &QueryRoot,
 				               &QueryParent, &QueryChildren, &nchild)) {
 					XFree(QueryChildren);
 					if (QueryParent == QueryRoot) break;
@@ -880,7 +869,7 @@ void CalcDxDy() {
 		XWindowAttributes         theTargetAttributes;
 
 		status =
-			XGetWindowAttributes(theDisplay, theTarget, &theTargetAttributes);
+			XGetWindowAttributes(D, theTarget, &theTargetAttributes);
 
 		if (ToWindow && status == 0) {
 			fprintf(stderr, "%s: '%s', Target Lost.\n",ProgramName, WindowName);
@@ -1106,8 +1095,8 @@ Bool ProcessEvent() {
 	XEvent      theEvent;
 	Bool        ContinueState = True;
 
-	while (XPending(theDisplay)) {
-		XNextEvent(theDisplay,&theEvent);
+	while (XPending(D)) {
+		XNextEvent(D,&theEvent);
 		switch (theEvent.type) {
 		case Expose:
 			if (theEvent.xexpose.count == 0) {
@@ -1122,7 +1111,7 @@ Bool ProcessEvent() {
 			break;
 		case VisibilityNotify:
 			if (RaiseWindowDelay==0) {
-				XRaiseWindow(theDisplay,theWindow);
+				XRaiseWindow(D,theWindow);
 				RaiseWindowDelay=DEFAULT_RAISE_WAIT;
 			}
 		default:
