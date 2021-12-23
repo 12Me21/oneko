@@ -4,6 +4,8 @@
 
 #include "oneko.h"
 #include "patchlevel.h"
+#include <X11/extensions/shape.h>
+#include <X11/extensions/Xfixes.h>
 
 /*
  *      グローバル変数
@@ -436,7 +438,7 @@ MakeMouseCursor()
 {
     Pixmap                      theCursorSource;
     Pixmap                      theCursorMask;
-
+    return;
     theCursorSource
         = XCreateBitmapFromData(theDisplay, theRoot,
                                 AnimalDefaultsDataTable[NekoMoyou].cursor,
@@ -515,13 +517,13 @@ Window SelectWindow(Display *dpy)
   cursor = theCursor;
 
   /* Grab the pointer using target cursor, letting it room all over */
-  status = XGrabPointer(dpy, root, False,
+  /*status = XGrabPointer(dpy, root, False,
                         ButtonPressMask|ButtonReleaseMask, GrabModeSync,
                         GrabModeAsync, root, cursor, CurrentTime);
   if (status != GrabSuccess) {
     fprintf(stderr, "%s: Can't grab the mouse.\n", ProgramName);
     exit(1);
-  }
+    }*/
 
   /* Let the user select a window... */
   while ((target_win == None) || (buttons != 0)) {
@@ -535,8 +537,7 @@ Window SelectWindow(Display *dpy)
         if (target_win == None) target_win = root;
       }
       buttons++;
-      break;
-    case ButtonRelease:
+      break;    case ButtonRelease:
       if (buttons > 0) /* there may have been some down before we started */
         buttons--;
        break;
@@ -671,19 +672,24 @@ InitScreen(char *DisplayName)
   }
 
   theWindowAttributes.background_pixel = theBackgroundColor.pixel;
-  theWindowAttributes.cursor = theCursor;
+  //theWindowAttributes.cursor = theCursor;
   theWindowAttributes.override_redirect = True;
 
-  if (!ToWindow) XChangeWindowAttributes(theDisplay, theRoot, CWCursor,
+  if (!ToWindow) XChangeWindowAttributes(theDisplay, theRoot, 0/*CWCursor*/,
                                          &theWindowAttributes);
 
-  theWindowMask = CWBackPixel | CWCursor | CWOverrideRedirect;
+  theWindowMask = CWBackPixel | /*CWCursor |*/ CWOverrideRedirect;
 
   theWindow = XCreateWindow(theDisplay, theRoot, 0, 0,
                             BITMAP_WIDTH, BITMAP_HEIGHT,
                             0, theDepth, InputOutput, CopyFromParent,
                             theWindowMask, &theWindowAttributes);
 
+  XRectangle rect;
+  XserverRegion region = XFixesCreateRegion(theDisplay, &rect, 1);
+  XFixesSetWindowShapeRegion(theDisplay, theWindow, ShapeInput, 0, 0, region);
+  XFixesDestroyRegion(theDisplay, region);
+  
   if (WindowName == NULL) WindowName = ProgramName;
   XStoreName(theDisplay, theWindow, WindowName);
 
@@ -703,12 +709,14 @@ InitScreen(char *DisplayName)
 void
 RestoreCursor()
 {
+	
   XSetWindowAttributes  theWindowAttributes;
   BitmapGCData *BitmapGCDataTablePtr;
-
+/*
   theWindowAttributes.cursor = None;
   XChangeWindowAttributes(theDisplay, theRoot, CWCursor,
                           &theWindowAttributes);
+*/
   for (BitmapGCDataTablePtr = BitmapGCDataTable;
        BitmapGCDataTablePtr->GCCreatePtr != NULL;
        BitmapGCDataTablePtr++) {
@@ -716,7 +724,7 @@ RestoreCursor()
     XFreePixmap(theDisplay,*(BitmapGCDataTablePtr->BitmapMasksPtr));
     XFreeGC(theDisplay,*(BitmapGCDataTablePtr->GCCreatePtr));
        }
-  XFreeCursor(theDisplay,theCursor);
+       //XFreeCursor(theDisplay,theCursor);
   XCloseDisplay(theDisplay);
   exit(0);
 }
