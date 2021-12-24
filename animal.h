@@ -22,7 +22,7 @@ struct Frames {
 		ltogi1, ltogi2, rtogi1, rtogi2;
 };
 
-enum {FRAME_COUNT = sizeof(struct Frames)/sizeof(Bytes)};
+enum {FRAME_COUNT = sizeof(struct Frames)/sizeof(Frame)};
 
 typedef struct Animal {
 	char* name;

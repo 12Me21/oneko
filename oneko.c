@@ -34,7 +34,7 @@ XColor  theBackgroundColor;             /* 色 (バックグラウンド) */
 
 int Synchronous = False;
 /* Types of animals */
-#define BITMAPTYPES 6
+#define BITMAPTYPES 1
 typedef struct _AnimalDefaults {
 	char* name;
 	int speed, idle;
@@ -66,7 +66,6 @@ char* Background = NULL;             /*   background */
 long    IntervalTime = 0L;              /*   time       */
 double  NekoSpeed = 0.0;          /*   speed      */
 int     IdleSpace = 0;                  /*   idle       */
-int     NekoMoyou = NOTDEFINED;         /*   tora       */
 int     NoShape = NOTDEFINED;           /*   noshape    */
 int     ReverseVideo = NOTDEFINED;      /*   reverse    */
 int     ToWindow = NOTDEFINED;          /*   towindow   */
@@ -110,72 +109,13 @@ int     RaiseWindowDelay=0;
 double  SinPiPer8Times3;        /* sin(３π／８) */
 double  SinPiPer8;              /* sin(π／８) */
 
-#define DEF_FRAME(name) Pixmap name##Xbm, name##Msk; GC name##GC
-
-DEF_FRAME(Mati2);
-DEF_FRAME(Jare2);
-DEF_FRAME(Kaki1); DEF_FRAME(Kaki2);
-DEF_FRAME(Mati3);
-DEF_FRAME(Sleep1); DEF_FRAME(Sleep2);
-DEF_FRAME(Awake);
-DEF_FRAME(Up1); DEF_FRAME(Up2);
-DEF_FRAME(Down1); DEF_FRAME(Down2);
-DEF_FRAME(Left1); DEF_FRAME(Left2);
-DEF_FRAME(Right1); DEF_FRAME(Right2);
-DEF_FRAME(UpLeft1); DEF_FRAME(UpLeft2);
-DEF_FRAME(UpRight1); DEF_FRAME(UpRight2);
-DEF_FRAME(DownLeft1); DEF_FRAME(DownLeft2);
-DEF_FRAME(DownRight1); DEF_FRAME(DownRight2);
-DEF_FRAME(UpTogi1); DEF_FRAME(UpTogi2);
-DEF_FRAME(DownTogi1); DEF_FRAME(DownTogi2);
-DEF_FRAME(LeftTogi1); DEF_FRAME(LeftTogi2);
-DEF_FRAME(RightTogi1); DEF_FRAME(RightTogi2);
-
 typedef struct BitmapGCData {
-	GC* GCCreatePtr;
-	Pixmap* BitmapCreatePtr;
-	char* PixelPattern[BITMAPTYPES];
-	Pixmap* BitmapMasksPtr;
-	char* MaskPattern[BITMAPTYPES];
+	GC GCCreatePtr;
+	Pixmap BitmapCreatePtr;
+	Pixmap BitmapMasksPtr;
 } BitmapGCData;
 
-#define GC_CONSTANTS(capital, name) { &capital##GC, &capital##Xbm,  name##_bits, name##_tora_bits, name##_dog_bits, name##_bsd_bits, name##_sakura_bits, name##_tomoyo_bits, &capital##Msk, name##_mask_bits, name##_mask_bits, name##_dog_mask_bits, name##_bsd_mask_bits, name##_sakura_mask_bits, name##_tomoyo_mask_bits }
-
-BitmapGCData    BitmapGCDataTable[] = {
-	GC_CONSTANTS(Mati2, mati2),
-	GC_CONSTANTS(Jare2, jare2),
-	GC_CONSTANTS(Kaki1, kaki1),
-	GC_CONSTANTS(Kaki2, kaki2),
-	GC_CONSTANTS(Mati3, mati3),
-	GC_CONSTANTS(Sleep1, sleep1),
-	GC_CONSTANTS(Sleep2, sleep2),
-	GC_CONSTANTS(Awake, awake),
-	GC_CONSTANTS(Up1, up1),
-	GC_CONSTANTS(Up2, up2),
-	GC_CONSTANTS(Down1, down1),
-	GC_CONSTANTS(Down2, down2),
-	GC_CONSTANTS(Left1, left1),
-	GC_CONSTANTS(Left2, left2),
-	GC_CONSTANTS(Right1, right1),
-	GC_CONSTANTS(Right2, right2),
-	GC_CONSTANTS(UpLeft1, upleft1),
-	GC_CONSTANTS(UpLeft2, upleft2),
-	GC_CONSTANTS(UpRight1, upright1),
-	GC_CONSTANTS(UpRight2, upright2),
-	GC_CONSTANTS(DownLeft1, dwleft1),
-	GC_CONSTANTS(DownLeft2, dwleft2),
-	GC_CONSTANTS(DownRight1, dwright1),
-	GC_CONSTANTS(DownRight2, dwright2),
-	GC_CONSTANTS(UpTogi1, utogi1),
-	GC_CONSTANTS(UpTogi2, utogi2),
-	GC_CONSTANTS(DownTogi1, dtogi1),
-	GC_CONSTANTS(DownTogi2, dtogi2),
-	GC_CONSTANTS(LeftTogi1, ltogi1),
-	GC_CONSTANTS(LeftTogi2, ltogi2),
-	GC_CONSTANTS(RightTogi1, rtogi1),
-	GC_CONSTANTS(RightTogi2, rtogi2),
-	{0},
-};
+BitmapGCData BitmapGCDataTable[FRAME_COUNT];
 
 typedef struct {
 	GC* TickGCPtr;
@@ -184,25 +124,19 @@ typedef struct {
 
 #define ANIM_CONSTANTS(name1, name2) {{&name1##GC, &name1##Msk},{&name2##GC, &name2##Msk}}
 
-Animation AnimationPattern[][2] = {
-	ANIM_CONSTANTS(Mati2, Mati2), // NEKO_STOP
-	ANIM_CONSTANTS(Jare2, Mati2), // NEKO_JARE
-	ANIM_CONSTANTS(Kaki1, Kaki2), // NEKO_KAKI
-	ANIM_CONSTANTS(Mati3, Mati3), // NEKO_AKUBI
-	ANIM_CONSTANTS(Sleep1, Sleep2), // NEKO_SLEEP
-	ANIM_CONSTANTS(Awake, Awake), // NEKO_AWAKE
-	ANIM_CONSTANTS(Up1, Up2), // NEKO_U_MOVE
-	ANIM_CONSTANTS(Down1, Down2), // NEKO_D_MOVE
-	ANIM_CONSTANTS(Left1, Left2), // NEKO_L_MOVE
-	ANIM_CONSTANTS(Right1, Right2), // NEKO_R_MOVE
-	ANIM_CONSTANTS(UpLeft1, UpLeft2), // NEKO_UL_MOVE
-	ANIM_CONSTANTS(UpRight1, UpRight2), // NEKO_UR_MOVE
-	ANIM_CONSTANTS(DownLeft1, DownLeft2), // NEKO_DL_MOVE
-	ANIM_CONSTANTS(DownRight1, DownRight2), // NEKO_DR_MOVE
-	ANIM_CONSTANTS(UpTogi1, UpTogi2), // NEKO_U_TOGI
-	ANIM_CONSTANTS(DownTogi1, DownTogi2), // NEKO_D_TOGI
-	ANIM_CONSTANTS(LeftTogi1, LeftTogi2), // NEKO_L_TOGI
-	ANIM_CONSTANTS(RightTogi1, RightTogi2), // NEKO_R_TOGI
+int AnimationPattern[][2] = {
+	{0, 0}, // NEKO_STOP
+	{1, 0}, // NEKO_JARE
+	{2, 3}, // NEKO_KAKI
+	{4, 4}, // NEKO_AKUBI
+	{5, 6}, // NEKO_SLEEP
+	{7, 7}, // NEKO_AWAKE
+	// move
+	{8, 9}, {10, 11}, {12, 13}, {14, 15},
+	// diagonal
+	{16, 17}, {18, 19}, {20, 21}, {22, 23},
+	// edge
+	{24, 25}, {26, 27}, {28, 29}, {30, 31},
 };
 
 static void NullFunction();
@@ -221,23 +155,23 @@ void InitBitmapAndGCs() {
 		.ts_y_origin = 0,
 	};
 	
-	for (BitmapGCData* p = BitmapGCDataTable; p->GCCreatePtr!=NULL; p++) {
-		*(p->BitmapCreatePtr) = XCreatePixmapFromBitmapData(
+	for (int i=0; i<FRAME_COUNT; i++) {
+		Frame* f = &animal->frame_list[i];
+		BitmapGCData* b = &BitmapGCDataTable[i];
+		
+		printf("%d\n", f->width);
+		
+		b->BitmapCreatePtr = XCreatePixmapFromBitmapData(
 			D, theRoot,
-			p->PixelPattern[NekoMoyou],
-			BITMAP_WIDTH, BITMAP_HEIGHT,
+			(char*)f->bits, f->width, f->height,
 			theForegroundColor.pixel,
 			theBackgroundColor.pixel,
 			DefaultDepth(D, theScreen));
-		
-		theGCValues.tile = *(p->BitmapCreatePtr);
-
-		*(p->BitmapMasksPtr) = XCreateBitmapFromData(
+		b->BitmapMasksPtr = XCreateBitmapFromData(
 			D, theRoot,
-			p->MaskPattern[NekoMoyou],
-			BITMAP_WIDTH, BITMAP_HEIGHT);
-
-		*(p->GCCreatePtr) = XCreateGC(
+			(char*)f->mask, f->width, f->height);
+		theGCValues.tile = b->BitmapCreatePtr;
+		b->GCCreatePtr = XCreateGC(
 			D, theWindow,
 			GCFunction | GCForeground | GCBackground | GCTile |
 			GCTileStipXOrigin | GCTileStipYOrigin | GCFillStyle,
@@ -305,11 +239,11 @@ void GetResources() {
 		}
 	}
 
-	if (NekoMoyou == NOTDEFINED) {
+	if (!animal) {
 		for (loop=0;loop<BITMAPTYPES;loop++)
-			if ((resource = NekoGetDefault(AnimalDefaultsDataTable[loop].name)) != NULL) {
+			if ((resource = NekoGetDefault(animals[loop]->name)) != NULL) {
 				if (IsTrue(resource))
-					NekoMoyou = loop;
+					animal = animals[loop];
 			}
 	}
 
@@ -331,20 +265,20 @@ void GetResources() {
 	if (Background == NULL) {
 		Background = DEFAULT_BACKGROUND;
 	}
-	if (NekoMoyou == NOTDEFINED) {
-		NekoMoyou = 0;
+	if (!animal) {
+		animal = animals[0];
 	}
 	if (IntervalTime == 0) {
-		IntervalTime = AnimalDefaultsDataTable[NekoMoyou].time;
+		IntervalTime = animal->time;
 	}
-	if (NekoSpeed == (double)0) {
-		NekoSpeed = (double)(AnimalDefaultsDataTable[NekoMoyou].speed);
+	if (NekoSpeed == 0) {
+		NekoSpeed = animal->speed;
 	}
 	if (IdleSpace == 0) {
-		IdleSpace = AnimalDefaultsDataTable[NekoMoyou].idle;
+		IdleSpace = animal->idle;
 	}
-	XOffset = XOffset + AnimalDefaultsDataTable[NekoMoyou].off_x;
-	YOffset = YOffset + AnimalDefaultsDataTable[NekoMoyou].off_y;
+	XOffset = XOffset + animal->off_x;
+	YOffset = YOffset + animal->off_y;
 	if (NoShape == NOTDEFINED) {
 		NoShape = False;
 	}
@@ -592,15 +526,11 @@ void InitScreen(char* DisplayName) {
  */
 
 void RestoreCursor() {
-	
-	XSetWindowAttributes  theWindowAttributes;
-	BitmapGCData* BitmapGCDataTablePtr;
-	for (BitmapGCDataTablePtr = BitmapGCDataTable;
-	     BitmapGCDataTablePtr->GCCreatePtr != NULL;
-	     BitmapGCDataTablePtr++) {
-		XFreePixmap(D,*(BitmapGCDataTablePtr->BitmapCreatePtr));
-		XFreePixmap(D,*(BitmapGCDataTablePtr->BitmapMasksPtr));
-		XFreeGC(D,*(BitmapGCDataTablePtr->GCCreatePtr));
+	for (int i=0; i<FRAME_COUNT; i++) {
+		BitmapGCData* b = &BitmapGCDataTable[i];
+		XFreePixmap(D, b->BitmapCreatePtr);
+		XFreePixmap(D, b->BitmapMasksPtr);
+		XFreeGC(D, b->GCCreatePtr);
 	}
 	XCloseDisplay(D);
 	exit(0);
@@ -654,11 +584,10 @@ void SetNekoState(int SetValue) {
  *      猫描画処理
  */
 
-void DrawNeko(int x, int y, Animation DrawAnime) {
-	/*@@@@@@*/
-	register GC         DrawGC = *(DrawAnime.TickGCPtr);
-	register Pixmap     DrawMask = *(DrawAnime.TickMaskPtr);
-
+void DrawNeko(int x, int y, int DrawAnime) {
+	GC DrawGC = BitmapGCDataTable[DrawAnime].GCCreatePtr;
+	Pixmap DrawMask = BitmapGCDataTable[DrawAnime].BitmapMasksPtr;
+	
 	if ((x != NekoLastX) || (y != NekoLastY)
 	    || (DrawGC != NekoLastGC)) {
 		XWindowChanges    theChanges;
@@ -941,6 +870,7 @@ void CalcDxDy() {
 void NekoThinkDraw() {
 	CalcDxDy();
 
+	
 	if (NekoState != NEKO_SLEEP) {
 		DrawNeko(NekoX, NekoY,
 		         AnimationPattern[NekoState][NekoTickCount & 0x1]);
@@ -1343,8 +1273,10 @@ void GetArguments(int argc, char *argv[], char *theDisplayName) {
 			if (strcmp(av, "bsd") == 0)
 				av = "bsd_daemon";
 			for (loop=0;loop<BITMAPTYPES;loop++) {
-				if (strcmp(av,AnimalDefaultsDataTable[loop].name)==0)
-					{NekoMoyou = loop;found=1;}
+				if (strcmp(av,animals[loop]->name)==0) {
+					animal = animals[loop];
+					found = 1;
+				}
 			}
 			if (!found) {
 				fprintf(stderr,
@@ -1376,7 +1308,7 @@ int main(int argc, char** argv) {
 	
 	GetArguments(argc, argv, theDisplayName);
 	
-	XSetErrorHandler(NekoErrorHandler);
+	//XSetErrorHandler(NekoErrorHandler);
 	
 	InitScreen(theDisplayName);
 	
