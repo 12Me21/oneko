@@ -5,21 +5,26 @@
 #include "oneko.h"
 #include "patchlevel.h"
 
+#include "animal.h"
+
+Animal* animals[20] = {0};
+Animal* animal;
+
 /*
  *      グローバル変数
  */
 
-char    *ClassName = "Oneko";           /* コマンド名称 */
-char    *ProgramName;                   /* コマンド名称 */
+char* ClassName = "Oneko";           /* コマンド名称 */
+char* ProgramName;                   /* コマンド名称 */
 
 Display* D;                    /* ディスプレイ構造体 */
 int     theScreen;                      /* スクリーン番号 */
 unsigned int    theDepth;               /* デプス */
 Window  theRoot;                        /* ルートウィンドウのＩＤ */
 Window  theWindow;                      /* 猫ウィンドウのＩＤ */
-char    *WindowName = NULL;             /* 猫ウィンドウの名前 */
+char* WindowName = NULL;             /* 猫ウィンドウの名前 */
 Window  theTarget = None;               /* 目標ウィンドウのＩＤ */
-char    *TargetName = NULL;             /* 目標ウィンドウの名前 */
+char* TargetName = NULL;             /* 目標ウィンドウの名前 */
 
 unsigned int    WindowWidth;            /* ルートウィンドウの幅 */
 unsigned int    WindowHeight;           /* ルートウィンドウの高さ */
@@ -56,8 +61,8 @@ AnimalDefaultsData AnimalDefaultsDataTable[] = {
  */
 
 /* Resource:    */
-char    *Foreground = NULL;             /*   foreground */
-char    *Background = NULL;             /*   background */
+char* Foreground = NULL;             /*   foreground */
+char* Background = NULL;             /*   background */
 long    IntervalTime = 0L;              /*   time       */
 double  NekoSpeed = 0.0;          /*   speed      */
 int     IdleSpace = 0;                  /*   idle       */
@@ -173,8 +178,8 @@ BitmapGCData    BitmapGCDataTable[] = {
 };
 
 typedef struct {
-	GC          *TickGCPtr;
-	Pixmap      *TickMaskPtr;
+	GC* TickGCPtr;
+	Pixmap* TickMaskPtr;
 } Animation;
 
 #define ANIM_CONSTANTS(name1, name2) {{&name1##GC, &name1##Msk},{&name2##GC, &name2##Msk}}
@@ -203,7 +208,7 @@ Animation AnimationPattern[][2] = {
 static void NullFunction();
 
 /*
- *      ビットマップデータ・GC 初期化
+* ビットマップデータ・GC 初期化
  */
 
 void InitBitmapAndGCs() {
@@ -244,8 +249,8 @@ void InitBitmapAndGCs() {
  *      リソース・データベースから必要なリソースを取り出す
  */
 
-char* NekoGetDefault(char *resource) {
-	char    *value;
+char* NekoGetDefault(char* resource) {
+	char* value;
 
 	if (value = XGetDefault(D, ProgramName, resource)) {
 		return value;
@@ -261,7 +266,7 @@ char* NekoGetDefault(char *resource) {
  */
 
 void GetResources() {
-	char  *resource;
+	char* resource;
 	int           num;
 	int loop;
 	if (Foreground == NULL) {
@@ -396,7 +401,7 @@ void SetupColors() {
  * This routine originate in dsimple.c
  */
 
-Window SelectWindow(Display *dpy) {
+Window SelectWindow(Display* dpy) {
 	int status;
 	XEvent event;
 	Window target_win = None, root = theRoot;
@@ -444,12 +449,12 @@ Window SelectWindow(Display *dpy) {
  *
  * This routine originate in dsimple.c
  */
-Window WindowWithName(Display *dpy, Window top, char *name) {
-	Window *children, dummy;
+Window WindowWithName(Display* dpy, Window top, char* name) {
+	Window* children, dummy;
 	unsigned int nchildren;
 	int i;
 	Window w=0;
-	char *window_name;
+	char* window_name;
 
 	if (XFetchName(dpy, top, &window_name) && !strcmp(window_name, name))
 		return(top);
@@ -462,7 +467,7 @@ Window WindowWithName(Display *dpy, Window top, char *name) {
 		if (w)
 			break;
 	}
-	if (children) XFree ((char *)children);
+	if (children) XFree ((char* )children);
 	return(w);
 }
 
@@ -470,7 +475,7 @@ Window WindowWithName(Display *dpy, Window top, char *name) {
  *      スクリーン環境初期化
  */
 
-void InitScreen(char *DisplayName) {
+void InitScreen(char* DisplayName) {
 	XSetWindowAttributes  theWindowAttributes;
 	unsigned long         theWindowMask;
 	Window                        theTempRoot;
@@ -589,7 +594,7 @@ void InitScreen(char *DisplayName) {
 void RestoreCursor() {
 	
 	XSetWindowAttributes  theWindowAttributes;
-	BitmapGCData *BitmapGCDataTablePtr;
+	BitmapGCData* BitmapGCDataTablePtr;
 	for (BitmapGCDataTablePtr = BitmapGCDataTable;
 	     BitmapGCDataTablePtr->GCCreatePtr != NULL;
 	     BitmapGCDataTablePtr++) {
@@ -1386,4 +1391,8 @@ int main(int argc, char** argv) {
 	ProcessNeko();
 	
 	RestoreCursor();
+}
+
+void define_animal(Animal* x) {
+	animals[0] = x;
 }

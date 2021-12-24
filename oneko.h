@@ -70,21 +70,21 @@
  */
 
 enum {
-	NEKO_STOP = 0, /* 立ち止まった */			  
-	NEKO_JARE,		/* 顔を洗っている */		  
-	NEKO_KAKI,		/* 頭を掻いている */		  
-	NEKO_AKUBI,		/* あくびをしている */		  
-	NEKO_SLEEP,		/* 寝てしまった */			  
-	NEKO_AWAKE,		/* 目が覚めた */				  
-	NEKO_U_MOVE,	/* 上に移動中 */				  
-	NEKO_D_MOVE,	/* 下に移動中 */				  
-	NEKO_L_MOVE,	/* 左に移動中 */				  
-	NEKO_R_MOVE,	/* 右に移動中 */				  
-	NEKO_UL_MOVE,	/* 左上に移動中 */			  
-	NEKO_UR_MOVE,	/* 右上に移動中 */			  
-	NEKO_DL_MOVE,	/* 左下に移動中 */			  
-	NEKO_DR_MOVE,	/* 右下に移動中 */			  
-	NEKO_U_TOGI,	/* 上の壁を引っ掻いている */
+	NEKO_STOP = 0, /* stopped */
+	NEKO_JARE,		/* washing face */
+	NEKO_KAKI,		/* scratching head */
+	NEKO_AKUBI,		/* yawning */
+	NEKO_SLEEP,		/* 寝てしまった */
+	NEKO_AWAKE,		/* 目が覚めた */
+	NEKO_U_MOVE,	/* 上に移動中 */
+	NEKO_D_MOVE,	/* 下に移動中 */
+	NEKO_L_MOVE,	/* 左に移動中 */
+	NEKO_R_MOVE,	/* 右に移動中 */
+	NEKO_UL_MOVE,	/* 左上に移動中 */
+	NEKO_UR_MOVE,	/* 右上に移動中 */
+	NEKO_DL_MOVE,	/* 左下に移動中 */
+	NEKO_DR_MOVE,	/* 右下に移動中 */
+	NEKO_U_TOGI,	/* scratching upper wall */
 	NEKO_D_TOGI,	/* 下の壁を引っ掻いている */
 	NEKO_L_TOGI,	/* 左の壁を引っ掻いている */
 	NEKO_R_TOGI,	/* 右の壁を引っ掻いている */
