@@ -2,7 +2,7 @@ output = oneko
 
 animals = neko dog bsd sakura tomoyo tora koko
 
-srcs = oneko.c $(animals:%=animals/%.c)
+srcs = main.c $(animals:%=animals/%.c)
 
 libs = c m
 pkgs = x11 xext xfixes

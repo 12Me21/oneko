@@ -17,7 +17,6 @@ typedef struct Animal {
 	char* name;
 	int speed;
 	int idle;
-	int bitmap_width, bitmap_height;
 	long time;
 	int off_x, off_y;
 	

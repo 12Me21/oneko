@@ -6,7 +6,6 @@
 static Animal x = {
 	.name = "dog",
 	.speed = 10, .idle = 6,
-	.bitmap_width = 32, .bitmap_height = 32,
 	.time = 125000L,
 	FRAME_DEFS(dog),
 };
