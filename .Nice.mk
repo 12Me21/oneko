@@ -1,6 +1,3 @@
-# rebuild everything when the makefile is modified
-.EXTRA_PREREQS += Makefile .Nice.mk
-
 # disable builtin rules to improve speed
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
@@ -21,7 +18,6 @@ comma := ,
 printlist = [$1m$(subst $(empty) $(empty),[39m$(comma) [$1m,$(2:$3%=[$1m%))
 print = echo '[48;5;230;0m[K$(call printlist,33,$1,$2)	[37mfrom: $(call printlist,32,$3,$4)[m'
 
-
 ifdef pkgs
  # check if the required packages are installed
  $(shell pkg-config --print-errors --short-errors --exists $(pkgs))
@@ -32,6 +28,10 @@ ifdef pkgs
  CFLAGS += $(shell pkg-config --cflags $(pkgs))
  libflags := $(shell pkg-config --libs $(pkgs))
 endif
+
+# rebuild everything when the makefile is modified
+$(output): | .Nice.mk Makefile
+$(srcs:%=$(junkdir)/%.o): .Nice.mk Makefile
 
 # Link
 $(output): $(srcs:%=$(junkdir)/%.o)

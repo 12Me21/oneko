@@ -7,7 +7,6 @@ srcs = oneko.c $(animals:%=animals/%.c)
 libs = c m
 pkgs = x11 xext xfixes
 
-CFLAGS += -D_DEFAULT_SOURCE
 CFLAGS += -g
 CFLAGS += -std=c11 -pedantic -Wno-overflow -Wno-parentheses
 
