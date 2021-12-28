@@ -1,14 +1,14 @@
 #include "../animal.h"
 
-#include "neko_bitmap.xbm"
-#include "neko_mask.xbm"
+#include "sakura_bitmap.xbm"
+#include "sakura_mask.xbm"
 
 static Animal x = {
-	.name = "neko",
+	.name = "sakura",
 	.speed = 13, .idle = 6,
 	.bitmap_width = 32, .bitmap_height = 32,
 	.time = 125000L,
-	.frame_list = FRAME_DEFS(neko),
+	.frame_list = FRAME_DEFS(sakura),
 };
 
 AUTORUN {

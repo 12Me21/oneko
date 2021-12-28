@@ -143,13 +143,13 @@ void InitBitmapAndGCs() {
 		
 		b->bitmap = XCreatePixmapFromBitmapData(
 			D, theRoot,
-			(char*)f->bits, f->width, f->height,
+			(char*)f->bits, BITMAP_WIDTH, BITMAP_HEIGHT,
 			theForegroundColor.pixel,
 			theBackgroundColor.pixel,
 			DefaultDepth(D, theScreen));
 		b->mask = XCreateBitmapFromData(
 			D, theRoot,
-			(char*)f->mask, f->width, f->height);
+			(char*)f->mask, BITMAP_WIDTH, BITMAP_HEIGHT);
 		theGCValues.tile = b->bitmap;
 		b->gc = XCreateGC(
 			D, theWindow,
@@ -1309,6 +1309,13 @@ int main(int argc, char** argv) {
 }
 
 void define_animal(Animal* x) {
+	Frame f0 = x->frame_list[0];
+	for (int i=1; i<32; i++) {
+		x->frame_list[i] = (Frame){
+			&f0.bits[32*32/8*i],
+			&f0.mask[32*32/8*i],
+		};
+	}
 	animals[animal_count] = x;
 	animal_count++;
 }

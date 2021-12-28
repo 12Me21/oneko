@@ -1,19 +1,29 @@
 output = oneko
 
-animals = neko dog bsd sakura tomoyo koko
+animals = neko dog bsd sakura tomoyo tora koko
 
 srcs = oneko.c $(animals:%=animals/%.c)
 
-# animals/tora.o  - alternate color for neko, uses same mask bitmaps as neko, need to fix our macros
+libs = c m
+pkgs = x11 xext xfixes
 
-animals/%_mask.xbm: animals/%.png
-	convert $< -alpha extract -negate $@
+CFLAGS += -D_DEFAULT_SOURCE
+CFLAGS += -g
+CFLAGS += -std=c11 -pedantic -Wno-overflow -Wno-parentheses
 
-animals/%_bitmap.xbm: animals/%.png
-	convert $< -alpha off $@
-
-libs = c m X11 Xext Xfixes
-
-CFLAGS += -Wno-overflow -Wno-parentheses -std=c11 -pedantic -D_DEFAULT_SOURCE -g
+
 
 include .Nice.mk
+
+
+
+# it took me so long to figure this out
+# you need the part before the first colon
+# otherwise this will not work
+$(animals:%=$(junkdir)/animals/%.c.o) : $(junkdir)/animals/%.c.o : animals/%_mask.xbm animals/%_bitmap.xbm
+
+%_mask.xbm: %.png
+	convert $< -alpha extract -negate $@
+
+%_bitmap.xbm: %.png
+	convert $< -alpha off $@
