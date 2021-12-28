@@ -1,7 +1,7 @@
 #include "../animal.h"
 
-#include "tomoyo_bitmap.xbm"
-#include "tomoyo_mask.xbm"
+#include "gen/tomoyo_bitmap.xbm"
+#include "gen/tomoyo_mask.xbm"
 
 static Animal x = {
 	.name = "tomoyo",
@@ -9,7 +9,7 @@ static Animal x = {
 	.bitmap_width = 32, .bitmap_height = 32,
 	.time = 125000L,
 	.off_x = 32, .off_y = 32,
-	.frame_list = FRAME_DEFS(tomoyo),
+	FRAME_DEFS(tomoyo),
 };
 
 AUTORUN {

@@ -1,7 +1,7 @@
 #include "../animal.h"
 
-#include "bsd_bitmap.xbm"
-#include "bsd_mask.xbm"
+#include "gen/bsd_bitmap.xbm"
+#include "gen/bsd_mask.xbm"
 
 static Animal x = {
 	.name = "bsd_daemon",
@@ -9,7 +9,7 @@ static Animal x = {
 	.bitmap_width = 32, .bitmap_height = 32,
 	.time = 300000L,
 	.off_x = 22, .off_y = 20,
-	.frame_list = FRAME_DEFS(bsd),
+	FRAME_DEFS(bsd),
 };
 
 AUTORUN {

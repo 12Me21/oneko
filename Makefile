@@ -16,13 +16,15 @@ include .Nice.mk
 
 
 
+animals/gen/%_mask.xbm: animals/%.png
+	@mkdir -p $(@D)
+	convert $< -alpha extract -negate $@
+
+animals/gen/%_bitmap.xbm: animals/%.png
+	@mkdir -p $(@D)
+	convert $< -alpha off $@
+
 # it took me so long to figure this out
 # you need the part before the first colon
 # otherwise this will not work
-$(animals:%=$(junkdir)/animals/%.c.o) : $(junkdir)/animals/%.c.o : animals/%_mask.xbm animals/%_bitmap.xbm
-
-%_mask.xbm: %.png
-	convert $< -alpha extract -negate $@
-
-%_bitmap.xbm: %.png
-	convert $< -alpha off $@
+$(animals:%=$(junkdir)/animals/%.c.o) : $(junkdir)/animals/%.c.o : animals/gen/%_mask.xbm animals/gen/%_bitmap.xbm

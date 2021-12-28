@@ -11,11 +11,6 @@ Animal* animals[20] = {0};
 int animal_count = 0;
 Animal* animal;
 
-/* １キャラクタの幅 (ピクセル) */
-#define BITMAP_WIDTH            32
-/* １キャラクタの高さ (ピクセル) */
-#define BITMAP_HEIGHT           32
-
 /*
  *      グローバル変数
  */
@@ -138,18 +133,17 @@ void InitBitmapAndGCs() {
 	};
 	
 	for (int i=0; i<FRAME_COUNT; i++) {
-		Frame* f = &animal->frame_list[i];
 		BitmapGCData* b = &frames[i];
 		
 		b->bitmap = XCreatePixmapFromBitmapData(
 			D, theRoot,
-			(char*)f->bits, BITMAP_WIDTH, BITMAP_HEIGHT,
+			(char*)&animal->bitmaps[i], BITMAP_WIDTH, BITMAP_HEIGHT,
 			theForegroundColor.pixel,
 			theBackgroundColor.pixel,
 			DefaultDepth(D, theScreen));
 		b->mask = XCreateBitmapFromData(
 			D, theRoot,
-			(char*)f->mask, BITMAP_WIDTH, BITMAP_HEIGHT);
+			(char*)&animal->masks[i], BITMAP_WIDTH, BITMAP_HEIGHT);
 		theGCValues.tile = b->bitmap;
 		b->gc = XCreateGC(
 			D, theWindow,
@@ -1309,13 +1303,13 @@ int main(int argc, char** argv) {
 }
 
 void define_animal(Animal* x) {
-	Frame f0 = x->frame_list[0];
+	/*Frame f0 = x->frame_list[0];
 	for (int i=1; i<32; i++) {
 		x->frame_list[i] = (Frame){
 			&f0.bits[32*32/8*i],
 			&f0.mask[32*32/8*i],
 		};
-	}
+		}*/
 	animals[animal_count] = x;
 	animal_count++;
 }
