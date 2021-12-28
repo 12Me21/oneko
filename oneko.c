@@ -8,7 +8,13 @@
 #include "animal.h"
 
 Animal* animals[20] = {0};
+int animal_count = 0;
 Animal* animal;
+
+/* １キャラクタの幅 (ピクセル) */
+#define BITMAP_WIDTH            32
+/* １キャラクタの高さ (ピクセル) */
+#define BITMAP_HEIGHT           32
 
 /*
  *      グローバル変数
@@ -26,35 +32,13 @@ char* WindowName = NULL;             /* 猫ウィンドウの名前 */
 Window  theTarget = None;               /* 目標ウィンドウのＩＤ */
 char* TargetName = NULL;             /* 目標ウィンドウの名前 */
 
-unsigned int    WindowWidth;            /* ルートウィンドウの幅 */
-unsigned int    WindowHeight;           /* ルートウィンドウの高さ */
+unsigned int WindowWidth;            /* ルートウィンドウの幅 */
+unsigned int WindowHeight;           /* ルートウィンドウの高さ */
 
 XColor  theForegroundColor;             /* 色 (フォアグラウンド) */
 XColor  theBackgroundColor;             /* 色 (バックグラウンド) */
 
 int Synchronous = False;
-/* Types of animals */
-#define BITMAPTYPES 1
-typedef struct _AnimalDefaults {
-	char* name;
-	int speed, idle;
-	int bitmap_width, bitmap_height;
-	long time;
-	int off_x, off_y;
-	char *cursor, *mask;
-	int cursor_width, cursor_height, cursor_x_hot, cursor_y_hot;
-} AnimalDefaultsData;
-
-#define CURSOR_CONSTANTS(name) name##_cursor_bits,name##_cursor_mask_bits, name##_cursor_width,name##_cursor_height, name##_cursor_x_hot,name##_cursor_y_hot
-
-AnimalDefaultsData AnimalDefaultsDataTable[] = {
-	{"neko", 13, 6, 32, 32, 125000L, 0, 0, CURSOR_CONSTANTS(mouse)},
-	{"tora", 16, 6, 32, 32, 125000L, 0, 0, CURSOR_CONSTANTS(mouse)},
-	{"dog" , 10, 6, 32, 32, 125000L, 0, 0, CURSOR_CONSTANTS(bone)},
-	{"bsd_daemon", 16, 6, 32, 32, 300000L, 22, 20, CURSOR_CONSTANTS(bsd)},
-	{"sakura", 13, 6, 32, 32, 125000L, 0, 0, CURSOR_CONSTANTS(card)},
-	{"tomoyo", 10, 6, 32, 32, 125000L, 32, 32, CURSOR_CONSTANTS(petal)},
-};
 
 /*
  *      いろいろな初期設定 (オプション、リソースで変えられるよ)
@@ -110,19 +94,17 @@ double  SinPiPer8Times3;        /* sin(３π／８) */
 double  SinPiPer8;              /* sin(π／８) */
 
 typedef struct BitmapGCData {
-	GC GCCreatePtr;
-	Pixmap BitmapCreatePtr;
-	Pixmap BitmapMasksPtr;
+	GC gc;
+	Pixmap bitmap;
+	Pixmap mask;
 } BitmapGCData;
 
-BitmapGCData BitmapGCDataTable[FRAME_COUNT];
+BitmapGCData frames[FRAME_COUNT];
 
 typedef struct {
 	GC* TickGCPtr;
 	Pixmap* TickMaskPtr;
 } Animation;
-
-#define ANIM_CONSTANTS(name1, name2) {{&name1##GC, &name1##Msk},{&name2##GC, &name2##Msk}}
 
 int AnimationPattern[][2] = {
 	{0, 0}, // NEKO_STOP
@@ -157,21 +139,19 @@ void InitBitmapAndGCs() {
 	
 	for (int i=0; i<FRAME_COUNT; i++) {
 		Frame* f = &animal->frame_list[i];
-		BitmapGCData* b = &BitmapGCDataTable[i];
+		BitmapGCData* b = &frames[i];
 		
-		printf("%d\n", f->width);
-		
-		b->BitmapCreatePtr = XCreatePixmapFromBitmapData(
+		b->bitmap = XCreatePixmapFromBitmapData(
 			D, theRoot,
 			(char*)f->bits, f->width, f->height,
 			theForegroundColor.pixel,
 			theBackgroundColor.pixel,
 			DefaultDepth(D, theScreen));
-		b->BitmapMasksPtr = XCreateBitmapFromData(
+		b->mask = XCreateBitmapFromData(
 			D, theRoot,
 			(char*)f->mask, f->width, f->height);
-		theGCValues.tile = b->BitmapCreatePtr;
-		b->GCCreatePtr = XCreateGC(
+		theGCValues.tile = b->bitmap;
+		b->gc = XCreateGC(
 			D, theWindow,
 			GCFunction | GCForeground | GCBackground | GCTile |
 			GCTileStipXOrigin | GCTileStipYOrigin | GCFillStyle,
@@ -240,7 +220,7 @@ void GetResources() {
 	}
 
 	if (!animal) {
-		for (loop=0;loop<BITMAPTYPES;loop++)
+		for (loop=0;loop<animal_count;loop++)
 			if ((resource = NekoGetDefault(animals[loop]->name)) != NULL) {
 				if (IsTrue(resource))
 					animal = animals[loop];
@@ -496,7 +476,11 @@ void InitScreen(char* DisplayName) {
 	theWindowAttributes.override_redirect = True;
 
 	if (!ToWindow) XChangeWindowAttributes(D, theRoot, 0, &theWindowAttributes);
-
+	
+	// from what i've read,
+	// `override_redirect`=true tells the window manager to "leave the window alone"
+	// that way it remains on top of other windows
+	// and won't show up in taskbars etc.
 	theWindowMask = CWBackPixel | CWOverrideRedirect;
 
 	theWindow = XCreateWindow(D, theRoot, 0, 0,
@@ -504,8 +488,7 @@ void InitScreen(char* DisplayName) {
 	                          0, theDepth, InputOutput, CopyFromParent,
 	                          theWindowMask, &theWindowAttributes);
 
-	XRectangle rect;
-	XserverRegion region = XFixesCreateRegion(D, &rect, 1);
+	XserverRegion region = XFixesCreateRegion(D, &(XRectangle){0,0,0,0}, 1);
 	XFixesSetWindowShapeRegion(D, theWindow, ShapeInput, 0, 0, region);
 	XFixesDestroyRegion(D, region);
   
@@ -527,10 +510,10 @@ void InitScreen(char* DisplayName) {
 
 void RestoreCursor() {
 	for (int i=0; i<FRAME_COUNT; i++) {
-		BitmapGCData* b = &BitmapGCDataTable[i];
-		XFreePixmap(D, b->BitmapCreatePtr);
-		XFreePixmap(D, b->BitmapMasksPtr);
-		XFreeGC(D, b->GCCreatePtr);
+		BitmapGCData* b = &frames[i];
+		XFreePixmap(D, b->bitmap);
+		XFreePixmap(D, b->mask);
+		XFreeGC(D, b->gc);
 	}
 	XCloseDisplay(D);
 	exit(0);
@@ -585,13 +568,13 @@ void SetNekoState(int SetValue) {
  */
 
 void DrawNeko(int x, int y, int DrawAnime) {
-	GC DrawGC = BitmapGCDataTable[DrawAnime].GCCreatePtr;
-	Pixmap DrawMask = BitmapGCDataTable[DrawAnime].BitmapMasksPtr;
+	GC DrawGC = frames[DrawAnime].gc;
+	Pixmap DrawMask = frames[DrawAnime].mask;
 	
 	if ((x != NekoLastX) || (y != NekoLastY)
 	    || (DrawGC != NekoLastGC)) {
-		XWindowChanges    theChanges;
-
+		XWindowChanges theChanges;
+		
 		theChanges.x = x;
 		theChanges.y = y;
 		XConfigureWindow(D, theWindow, CWX | CWY, &theChanges);
@@ -609,7 +592,7 @@ void DrawNeko(int x, int y, int DrawAnime) {
 	}
 
 	XFlush(D);
-
+	
 	NekoLastX = x;
 	NekoLastY = y;
 
@@ -1154,8 +1137,8 @@ void Usage() {
 		fprintf(stderr,"%s\n", *mptr);
 		mptr++;
 	}
-	for (loop=0;loop<BITMAPTYPES;loop++)
-		fprintf(stderr,"-%s Use %s bitmaps\n",AnimalDefaultsDataTable[loop].name,AnimalDefaultsDataTable[loop].name);
+	for (loop=0;loop<animal_count;loop++)
+		fprintf(stderr,"-%s Use %s bitmaps\n",animals[loop]->name, animals[loop]->name);
 }
 
 
@@ -1272,7 +1255,7 @@ void GetArguments(int argc, char *argv[], char *theDisplayName) {
 			char *av = argv[ArgCounter] + 1;
 			if (strcmp(av, "bsd") == 0)
 				av = "bsd_daemon";
-			for (loop=0;loop<BITMAPTYPES;loop++) {
+			for (loop=0;loop<animal_count;loop++) {
 				if (strcmp(av,animals[loop]->name)==0) {
 					animal = animals[loop];
 					found = 1;
@@ -1326,5 +1309,6 @@ int main(int argc, char** argv) {
 }
 
 void define_animal(Animal* x) {
-	animals[0] = x;
+	animals[animal_count] = x;
+	animal_count++;
 }
